@@ -1,31 +1,43 @@
 import React, { useState, useEffect } from 'react';
 
-const distanceScaling = 100;
-
 const App = () => {
   const [board, setBoard] = useState(() => {
-    // Initialize the board with empty intersections
-    return Array.from({ length: distanceScaling }, () => Array(distanceScaling).fill(null));
+    return Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
   });
+  const [alive, setAlive] = useState([[0, 0]]);
+
 
   useEffect(() => {
+    const updateBoard = () => {
+      const newBoard = Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
+      for (let a = 0; a < alive.length; a++) {
+        try{
+          newBoard[alive[a][0]][alive[a][1]] = true;
+        }catch(e){
+          continue;
+        }
+      }
+      setBoard(newBoard);
+    }
+
     const handleKeyDown = (event) => {
       switch (event.key) {
         case 'ArrowUp':
-          window.scrollBy(0, -10); // Scroll up
+          setAlive(alive.map((coord) => [coord[0] + 1, coord[1]]));
           break;
         case 'ArrowDown':
-          window.scrollBy(0, 10); // Scroll down
+          setAlive(alive.map((coord) => [coord[0] - 1, coord[1]]));
           break;
         case 'ArrowLeft':
-          window.scrollBy(-10, 0); // Scroll left
+          setAlive(alive.map((coord) => [coord[0], coord[1] + 1]));
           break;
         case 'ArrowRight':
-          window.scrollBy(10, 0); // Scroll right
+          setAlive(alive.map((coord) => [coord[0], coord[1] - 1]));
           break;
         default:
           break;
       }
+      updateBoard();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -33,50 +45,64 @@ const App = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [alive, setBoard]);
 
-  const handleIntersectionClick = (row, col) => {
-    // Example: Set a stone on the clicked intersection
+
+  const handleCellClick = (row, col) => {
+    // Example: Set alive on the clicked Cell
     const newBoard = [...board];
-    newBoard[row][col] = 'stone'; // Replace 'stone' with a proper representation
+    newBoard[row][col] = !board[row][col];; // Replace 'alive' with a proper representation
     setBoard(newBoard);
+    setAlive([...alive, [row, col]]);
   };
 
   const styles = {
+    app: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      backgroundColor: 'black',
+    },
     gameBoard: {
       display: 'flex',
       flexDirection: 'column',
+      position: 'absolute',
       alignItems: 'center',
+      backgroundColor: 'black',
     },
     boardRow: {
       display: 'flex',
     },
-    intersection: {
-      width: '30px',
-      height: '30px',
-      border: '1px solid #000',
+    Cell: {
+      width: '4vh',
+      height: '4vh',
+      border: '1px solid grey',
+      backgroundColor: 'black',
+      boxSizing: 'border-box',
       cursor: 'pointer',
     },
-    stone: {
+    alive: {
       width: '100%',
       height: '100%',
-      borderRadius: '50%',
-      backgroundColor: 'black', // Adjust color as needed
+      backgroundColor: 'white', // Adjust color as needed
     },
   };
 
   return (
-    <div style={styles.gameBoard}>
-      {board.map((row, rowIndex) => (
-        <div key={rowIndex} style={styles.boardRow}>
-          {row.map((stone, colIndex) => (
-            <div key={colIndex} style={styles.intersection} onClick={() => handleIntersectionClick(rowIndex, colIndex)}>
-              {/* Render stones or empty intersections */}
-              {stone && <div style={styles.stone} />}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div style={styles.app}>
+      <div style={styles.gameBoard}>
+        {board.map((row, rowIndex) => (
+          <div key={rowIndex} style={styles.boardRow}>
+            {row.map((alive, colIndex) => (
+              <div key={colIndex} style={styles.Cell} onClick={() => handleCellClick(rowIndex, colIndex)}>
+                {/* Render alives or empty Cells */}
+                {alive && <div style={styles.alive} />}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
