@@ -5,6 +5,7 @@ const App = () => {
     return Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
   });
   const [alive, setAlive] = useState([[0, 0]]);
+  const width = parseInt(25 * window.innerWidth / window.innerHeight);
 
 
   useEffect(() => {
@@ -59,14 +60,17 @@ const App = () => {
   const styles = {
     app: {
       display: 'flex',
+      position: 'absolute',
       justifyContent: 'center',
       alignItems: 'center',
       height: '100vh',
+      width: '100vw',
       backgroundColor: 'black',
     },
     gameBoard: {
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
       position: 'absolute',
       alignItems: 'center',
       backgroundColor: 'black',
@@ -94,7 +98,7 @@ const App = () => {
       <div style={styles.gameBoard}>
         {board.map((row, rowIndex) => (
           <div key={rowIndex} style={styles.boardRow}>
-            {row.map((alive, colIndex) => (
+            {row.slice(0,width).map((alive, colIndex) => (
               <div key={colIndex} style={styles.Cell} onClick={() => handleCellClick(rowIndex, colIndex)}>
                 {/* Render alives or empty Cells */}
                 {alive && <div style={styles.alive} />}
@@ -107,4 +111,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App; 
