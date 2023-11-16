@@ -4,7 +4,7 @@ const App = () => {
   const [board, setBoard] = useState(() => {
     return Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
   });
-  const [alive, setAlive] = useState([[0, 0]]);
+  const [alive, setAlive] = useState([[13.34, 13.34]]);
   const width = parseInt(25 * window.innerWidth / window.innerHeight);
 
 
@@ -42,6 +42,7 @@ const App = () => {
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    handleKeyDown('ArrowUp');
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
