@@ -26,7 +26,7 @@ const App = () => {
           newBoard[alive[i][0]][alive[i][1]] = true;
         } catch (e) { }
       }
-      setBoard(newBoard);
+      setBoard(newBoard);   
     }
 
     const handleKeyDown = (event) => {
@@ -52,9 +52,9 @@ const App = () => {
 
     const nextGen = () => {      
       const neighbors = [];
-      for(let i = 0; i < alive.length; i++) {
-        let v0 = alive[i][0];
-        let v1 = alive[i][1];
+      for(let a = 0; a < alive.length; a++) {
+        let v0 = alive[a][0];
+        let v1 = alive[a][1];
         for (let i = -1; i < 2; i++) {
           for (let j = -1; j < 2; j++) {
             if(!has(neighbors, [v0+i,v1+j]))
@@ -64,15 +64,15 @@ const App = () => {
       }
       
       const nextGenAlive = [];
-      for(let i = 0; i < neighbors.length; i++) {
-        let v0 = neighbors[i][0];
-        let v1 = neighbors[i][1];
+      for(let n = 0; n < neighbors.length; n++) {
+        let v0 = neighbors[n][0];
+        let v1 = neighbors[n][1];
         let liveNeighbors = 0;
         for (let i = -1; i < 2; i++) {
           for (let j = -1; j < 2; j++) {
-            if (i||j===false) 
+            if (i===0&&j===0) 
               continue;
-            liveNeighbors += has(alive, [v0,v1]) ? 1 : 0;
+            liveNeighbors += has(alive, [v0+i,v1+j]) ? 1 : 0;
           }
         }
 
@@ -82,10 +82,8 @@ const App = () => {
         }
         if (liveNeighbors === 3)
           nextGenAlive.push([v0, v1]);
-      }    
+      }  
       setAlive(nextGenAlive);
-      console.log(alive);
-      updateBoard();
     }
 
 
@@ -98,10 +96,11 @@ const App = () => {
     const gameLoop = setInterval(() => {
       if (play && alive) {
         nextGen();
+        updateBoard();
       } else {
         setPlay(false);
       }
-    }, 1000);
+    }, 100);
 
 
     window.addEventListener('keydown', handleKeyDown);
