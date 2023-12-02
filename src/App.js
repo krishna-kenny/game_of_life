@@ -1,110 +1,100 @@
 import React, { useState, useEffect } from 'react';
 
 const App = () => {
-  const [board, setBoard] = useState(() => {
-    return Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
-  });
+  const numberOfVerticalCells = 3;
+  const numberOfHorizontalCells = Math.floor((numberOfVerticalCells * window.innerWidth) / window.innerHeight);
+  const area = numberOfVerticalCells * numberOfHorizontalCells;
+  const world = [1000, 2000];
+  const [xBoard, setXBoard] = useState(Math.floor(world[0] / 2));
+  const [yBoard, setYBoard] = useState(Math.floor(world[1] / 2));
+  const [board, setBoard] = useState(() => Array.from({ length: area }).fill(false));
   const [alive, setAlive] = useState([]);
   const [play, setPlay] = useState(false);
-  const width = parseInt(25 * window.innerWidth / window.innerHeight);
-
-
-  const has = (lst, el)=>{
-    for(let i=0; i<lst.length; i++){
-      if(lst[i][0]===el[0]&&lst[i][1]===el[1])
-        return true;
-    }
-    return false;
-  }
-
 
   useEffect(() => {
     const updateBoard = () => {
-      const newBoard = Array.from({ length: 25 }, () => Array(parseInt(25 * window.innerWidth / window.innerHeight)).fill(false));
-      for(let i=0; i<alive.length; i++) {        
-        try {
-          newBoard[alive[i][0]][alive[i][1]] = true;
-        } catch (e) { }
+      const newBoard = Array.from({ length: area }).fill(false);
+      let xAxis, yAxis;
+      for (let caIdx = 0; caIdx < alive.length; caIdx++) {
+        xAxis = (alive[caIdx] % numberOfHorizontalCells) - xBoard;
+        yAxis = Math.floor(alive[caIdx] / numberOfHorizontalCells) - yBoard;
+        newBoard[(yAxis * numberOfHorizontalCells) + xAxis] = true;
       }
-      setBoard(newBoard);   
-    }
+      setBoard(newBoard);
+    };
 
     const handleKeyDown = (event) => {
       switch (event.key) {
-        case 'ArrowUp':
-          setAlive((currAlive) => (currAlive ? [...currAlive].map(coord => [coord[0] + 1, coord[1]]) : []));
-          break;
-        case 'ArrowDown':
-          setAlive((currAlive) => (currAlive ? [...currAlive].map(coord => [coord[0] - 1, coord[1]]) : []));
-          break;
-        case 'ArrowLeft':
-          setAlive((currAlive) => (currAlive ? [...currAlive].map(coord => [coord[0], coord[1] + 1]) : []));
-          break;
-        case 'ArrowRight':
-          setAlive((currAlive) => (currAlive ? [...currAlive].map(coord => [coord[0], coord[1] - 1]) : []));
-          break;
-        default:
-          break;
+        case 'ArrowUp': setYBoard((y) => y - 1); break;
+        case 'ArrowDown': setYBoard((y) => y + 1); break;
+        case 'ArrowLeft': setXBoard((x) => x - 1); break;
+        case 'ArrowRight': setXBoard((x) => x + 1); break;
+        default: break;
       }
       updateBoard();
     };
 
+    const handleKeyUp = (event) => {
+      if (event.key === ' ' || event.key === 'Enter')
+        setPlay((p) => !p);
+    };
 
-    const nextGen = () => {      
-      const neighbors = [];
-      for(let a = 0; a < alive.length; a++) {
-        let v0 = alive[a][0];
-        let v1 = alive[a][1];
-        for (let i = -1; i < 2; i++) {
-          for (let j = -1; j < 2; j++) {
-            if(!has(neighbors, [v0+i,v1+j]))
-              neighbors.push([v0+i,v1+j]);
+    const nextGen = () => {
+      const nextGenAlive = [];
+      for (let caIdx = 0; caIdx < alive.length; caIdx++) {
+        const community = [
+          caIdx-world[1]-1,
+          caIdx-world[1],
+          caIdx-world[1]+1,
+          caIdx-1,
+          caIdx,
+          caIdx+1,
+          caIdx+world[1]-1,
+          caIdx+world[1],
+          caIdx+world[1]+1,
+        ]
+
+        let brothers; let neighbours;
+        for(let commIdx = 0; commIdx < community.length; commIdx++){
+          brothers=0;
+          neighbours = [
+            commIdx-world[1]-1,
+            commIdx-world[1],
+            commIdx-world[1]+1,
+            commIdx-1,
+            commIdx+1,
+            commIdx+world[1]-1,
+            commIdx+world[1],
+            commIdx+world[1]+1,
+          ];
+          for(let a = 0; a < neighbours.length; a++){
+            if(alive.includes(neighbours[a]))
+              brothers++;
           }
+          
+          if(alive.includes(commIdx)){
+            if(brothers === 2){
+              nextGenAlive.push(commIdx);
+            }
+          }
+          if(brothers === 3){
+            nextGenAlive.push(commIdx);
+          }          
         }
       }
-      
-      const nextGenAlive = [];
-      for(let n = 0; n < neighbors.length; n++) {
-        let v0 = neighbors[n][0];
-        let v1 = neighbors[n][1];
-        let liveNeighbors = 0;
-        for (let i = -1; i < 2; i++) {
-          for (let j = -1; j < 2; j++) {
-            if (i===0&&j===0) 
-              continue;
-            liveNeighbors += has(alive, [v0+i,v1+j]) ? 1 : 0;
-          }
-        }
-
-        if (has(alive,[v0, v1])) {
-          if (liveNeighbors === 2)
-            nextGenAlive.push([v0, v1]);
-        }
-        if (liveNeighbors === 3)
-          nextGenAlive.push([v0, v1]);
-      }  
       setAlive(nextGenAlive);
     }
 
 
-    const handleKeyUp = (event) => {
-      if (event.key === ' ' || event.key === 'Enter')
-        setPlay((p) => !p);
-    }
-
-
     const gameLoop = setInterval(() => {
-      if (play && alive) {
+      if (play && alive.length) {
         nextGen();
-        updateBoard();
       } else {
         setPlay(false);
       }
-    }, 100);
-
+    }, 1000);
 
     window.addEventListener('keydown', handleKeyDown);
-    handleKeyDown('ArrowUp');
     window.addEventListener('keyup', handleKeyUp);
 
     return () => {
@@ -112,68 +102,63 @@ const App = () => {
       window.removeEventListener('keyup', handleKeyUp);
       clearInterval(gameLoop);
     };
-  }, [alive, play]);
+  }, [alive, play, xBoard, yBoard, numberOfHorizontalCells, area]);
 
-
-  const handleCellClick = (y, x) => {
-    setAlive((has(alive, [y, x]))
-      ? alive.filter(cell => !(cell[0] === y && cell[1] === x))
-      : [...alive, [y, x]]
-    );
+  const handleCellClick = (rowIndex, colIndex) => {
+    const cellIndex = rowIndex * numberOfHorizontalCells + colIndex;
+    setAlive((prevState) => (
+      prevState.includes(cellIndex)
+        ? prevState.filter(item => item !== cellIndex)
+        : [...prevState, cellIndex]
+    ));
   };
 
+  const displayBoard = () => (
+    <div style={styles.gameBoard}>
+      {board.map((cell, index) => (
+        <div
+          key={index}
+          style={{
+            ...styles.cell,
+            backgroundColor: alive.includes(index) ? 'white' : 'black',
+          }}
+          onClick={() => handleCellClick(
+            Math.floor(index / numberOfHorizontalCells),
+            index % numberOfHorizontalCells
+          )}
+        />
+      ))}
+    </div>
+  );
 
   const styles = {
-    app: {
-      display: 'flex',
-      position: 'absolute',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      width: '100vw',
-      backgroundColor: 'black',
-    },
     gameBoard: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
+      display: 'grid',
+      gridTemplateColumns: `repeat(${numberOfHorizontalCells}, 1fr)`,
+      gridTemplateRows: `repeat(${numberOfVerticalCells}, 1fr)`,
       position: 'absolute',
-      alignItems: 'center',
-      backgroundColor: 'black',
+      margin: 0,
+      padding: 0,
+      width: '98vw',
+      height: '90vh',
     },
-    boardRow: {
-      display: 'flex',
-    },
-    Cell: {
-      width: '4vh',
-      height: '4vh',
-      border: '1px solid grey',
-      backgroundColor: 'black',
-      boxSizing: 'border-box',
-      cursor: 'pointer',
-    },
-    alive: {
-      width: '100%',
+    cell: {
       height: '100%',
-      backgroundColor: 'white', // Adjust color as needed
+      width: '100%',
+      aspectRatio: '1/1', // Ensures the cell is square
+      border: '1px solid grey',
+      boxSizing: 'border-box',
+      margin: 0,
+      padding: 0,
+      cursor: 'pointer',
     },
   };
 
   return (
-    <div style={styles.app}>
-      <div style={styles.gameBoard}>
-        {board.map((row, rowIndex) => (
-          <div key={rowIndex} style={styles.boardRow}>
-            {row.slice(0, width).map((alive, colIndex) => (
-              <div key={colIndex} style={styles.Cell} onClick={() => handleCellClick(rowIndex, colIndex)}>
-                {alive && <div style={styles.alive} />}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+    <div style={styles.gameBoard}>
+      {displayBoard()}
     </div>
   );
 };
 
-export default App; 
+export default App;
